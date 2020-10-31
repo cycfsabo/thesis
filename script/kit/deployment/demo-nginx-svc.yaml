@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx1142
+spec:
+  selector:
+    app: deployapp
+  type: NodePort
+  ports:
+    - name: port1
+      port: 80
+      targetPort: 80

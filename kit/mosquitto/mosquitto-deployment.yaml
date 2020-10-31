@@ -1,0 +1,54 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mosquitto
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: mosquitto
+  template:
+    metadata:
+      labels:
+        app: mosquitto
+    spec:
+      containers:
+      - name: mosquitto
+        image: toke/mosquitto
+        imagePullPolicy: Always
+        lifecycle:
+          postStart:
+            exec:
+              command: ["/bin/bash", "-c", "echo Start", "mosquitto_sub -h 0.0.0.0 -t topic"]
+        resources:
+          limits:
+            cpu: 0.5
+            memory: 500Mi
+          requests:
+            cpu: 0.1
+            memory: 50Mi
+        ports:
+        - containerPort: 9001
+        - containerPort: 8883
+        volumeMounts:
+        - name: mosquitto
+          mountPath: /srv/mqtt/config
+        - name: localtime
+          mountPath: /etc/localtime
+        - name: mosquitto-data
+          mountPath: /srv/mqtt/data
+        - name: mosquitto-log
+          mountPath: /srv/mqtt/log
+      volumes:
+      - name: mosquitto
+        persistentVolumeClaim:
+          claimName: pvc-mosquitto-config
+      - name: mosquitto-data
+        persistentVolumeClaim:
+          claimName: pvc-mosquitto-data
+      - name: mosquitto-log
+        persistentVolumeClaim:
+          claimName: pvc-mosquitto-log
+      - name: localtime
+        hostPath:
+          path: /etc/localtime

@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: pvc-mosquitto-config
+spec:
+  storageClassName: mosquitto-config
+  accessModes:
+    - ReadOnlyMany
+  resources:
+    requests:
+      storage: 15Mi

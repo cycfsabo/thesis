@@ -1,0 +1,28 @@
+heat_template_version: "2018-08-31"
+description: "version 2017-09-01 created by HOT Generator at Mon, 21 Sep 2020 16:17:52 GMT."
+
+parameters:
+  key_name:
+    type: string
+    default: stack_key
+  flavor:
+    type: string
+    default: m1.micro
+  image:
+    type: string
+  network_private:
+    type: string
+
+resources: 
+  ResourceGroup_1: 
+    type: "OS::Heat::ResourceGroup"
+    properties: 
+      resource_def: 
+        type: "OS::Nova::Server"
+        properties: 
+          networks: 
+            - network: {get_param: network_private}
+          image: {get_param: image}
+          flavor: {get_param: flavor}
+          key_name: {get_param: key_name}
+      count: 2

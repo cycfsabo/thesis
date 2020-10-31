@@ -1,0 +1,64 @@
+# Install Docker
+curl -fsSL https://get.docker.com -o get-docker.sh
+sh get-docker.sh
+
+# Installing kubeadm, kubelet and kubectl
+
+sudo apt-get update && sudo apt-get install -y apt-transport-https curl
+curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -
+cat <<EOF | sudo tee /etc/apt/sources.list.d/kubernetes.list
+deb https://apt.kubernetes.io/ kubernetes-xenial main
+EOF
+sudo apt-get update
+sudo apt-get install -y kubelet=1.17.6-00 kubeadm=1.17.6-00 kubectl=1.17.6-00
+
+# Install Master node with Calico
+
+kubeadm init --apiserver-advertise-address=10.0.0.4  --pod-network-cidr=10.0.0.0/16 --service-cidr=10.0.0.0/16
+
+# Sau khi chay xong thi dung lenh nay 
+
+mkdir -p $HOME/.kube
+sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+sudo chown $(id -u):$(id -g) $HOME/.kube/config
+
+kubectl create -f https://docs.projectcalico.org/manifests/tigera-operator.yaml
+
+kubectl create -f https://docs.projectcalico.org/manifests/custom-resources.yaml
+
+kubectl apply -f "https://cloud.weave.works/k8s/net?k8s-version=$(kubectl version | base64 | tr -d '\n')"
+
+
+kubectl taint nodes --all node-role.kubernetes.io/master-
+
+# Install Worker Node 
+
+# Tren master node, chay lenh sau
+
+kubeadm token create --print-join-command
+
+# No se print ra 1 join command, copy command do va chay tren worker node
+
+# De kiem tra cac node, chay lenh:
+
+kubectl get nodes
+
+#Install Prom-grafana:
+
+curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3
+chmod 700 get_helm.sh
+./get_helm.sh
+helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+helm repo add stable https://kubernetes-charts.storage.googleapis.com/
+helm repo update
+helm install --generate-name prometheus-community/kube-prometheus-stack
+
+#Install metrics server
+kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/download/v0.3.7/components.yaml
+kubectl edit deploy metrics-server -n kube-system
+args:
+          - --cert-dir=/tmp
+          - --secure-port=4443
+          - --kubelet-insecure-tls
+          - --kubelet-preferred-address-types=InternalIP,ExternalIP,Hostname
+
